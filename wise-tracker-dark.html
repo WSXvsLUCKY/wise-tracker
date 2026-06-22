@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Wise Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+
+:root{
+  --bg:#000000;
+  --card:#0a0a0a;
+  --card2:#0d0d0d;
+  --line:#1a1a1a;
+  --line2:#222222;
+  --ink:#ffffff;
+  --muted:rgba(255,255,255,0.50);
+  --red:#ff1e1e;
+  --red-strong:#cc0000;
+  --red-tint:rgba(255,30,30,0.12);
+  --red-glow:rgba(255,30,30,0.18);
+  --free:#33373E;
+  --project:#7C2A33;
+  --goal:#ff1e1e;
+  --crypto:#A2A6AC;
+  --radius:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+.ribbon{height:4px;background:var(--red);width:100%;}
+.loading{display:flex;align-items:center;justify-content:center;height:80vh;color:var(--muted);font-size:14px;}
+
+/* TOPBAR */
+.topbar{
+  padding:16px 20px 14px;
+  border-bottom:1px solid var(--line);
+  background:rgba(0,0,0,0.97);
+  backdrop-filter:blur(12px);
+}
+.brand{
+  font-size:22px;font-weight:900;letter-spacing:.04em;
+  text-transform:uppercase;margin:0;line-height:1;
+}
+.brand .accent{color:var(--red);}
+.brand-sub{
+  font-size:10px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;margin-top:3px;
+}
+
+.scroll{flex:1;overflow-y:auto;padding:18px 16px 110px;}
+
+/* CARDS */
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:12px;
+}
+.card.glow{
+  border-color:#330000;
+  box-shadow:0 0 28px var(--red-glow);
+}
+.card h3{
+  font-size:11px;margin:0 0 14px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);font-weight:700;
+}
+
+/* GOAL */
+.goal-title{
+  font-size:11px;color:var(--muted);text-align:center;
+  margin-bottom:16px;text-transform:uppercase;letter-spacing:.06em;
+}
+.ring-wrap{position:relative;width:140px;height:140px;margin:0 auto 16px;}
+.ring-wrap svg{display:block;}
+.ring-center{
+  position:absolute;inset:0;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;
+}
+.ring-pct{font-size:28px;font-weight:900;color:var(--ink);}
+.ring-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.goal-amounts{text-align:center;margin-bottom:14px;}
+.goal-amounts .saved{font-size:20px;font-weight:800;color:var(--red);}
+.goal-amounts .of{font-size:12px;color:var(--muted);margin-top:4px;}
+.divider{border-top:1px solid var(--line);margin:14px 0;}
+.projection{font-size:13px;line-height:1.6;text-align:center;color:rgba(255,255,255,0.8);}
+.projection b{color:var(--red);font-weight:800;}
+
+/* LEDGER ROWS */
+.ledger-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--line);
+}
+.ledger-row:last-child{border-bottom:none;}
+.ledger-row .sq{width:8px;height:8px;border-radius:3px;flex-shrink:0;}
+.ledger-row .lbl{flex:1;font-size:13px;color:rgba(255,255,255,0.85);}
+.ledger-row .val{font-size:13.5px;font-weight:600;}
+.ledger-row .val.neg{color:var(--red);}
+.ledger-row .pct{font-size:12px;color:var(--muted);width:38px;text-align:right;font-weight:600;}
+
+/* ALLOCATION BAR */
+.alloc-bar{
+  display:flex;height:10px;border-radius:99px;overflow:hidden;
+  background:#111;margin-bottom:14px;
+}
+
+/* SUMMARY BOXES */
+.summary-row{display:flex;gap:10px;margin-bottom:12px;}
+.summary-row .item{
+  flex:1;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:12px 14px;
+}
+.summary-row .item .l{
+  font-size:10px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:6px;font-weight:700;
+}
+.summary-row .item .v{font-size:15px;font-weight:700;}
+
+/* SEGMENTED */
+.segmented{
+  display:flex;background:#111;border-radius:12px;
+  padding:4px;margin-bottom:14px;gap:4px;
+}
+.segmented button{
+  flex:1;border:none;background:transparent;color:var(--muted);
+  padding:9px 0;border-radius:9px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.segmented button.active{background:var(--red);color:#fff;}
+
+/* CHIPS */
+.chip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.chip{
+  background:var(--card2);border:1px solid var(--line2);color:rgba(255,255,255,0.8);
+  border-radius:12px;padding:11px 10px;font-size:13px;cursor:pointer;
+  text-align:left;font-family:inherit;font-weight:500;transition:all .15s;
+}
+.chip.active{
+  border-color:var(--red);background:var(--red-tint);
+  color:var(--red);font-weight:700;
+}
+
+/* FIELDS */
+.field{margin-bottom:12px;}
+.field label{
+  display:block;font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-weight:700;
+}
+.field input,.field select{
+  width:100%;background:var(--card2);border:1px solid var(--line2);
+  border-radius:12px;padding:12px 14px;color:var(--ink);
+  font-size:16px;font-family:inherit;
+}
+.field input.mono{font-size:17px;}
+.field select option{background:#111;color:#fff;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--red);}
+.field input::placeholder{color:rgba(255,255,255,0.25);}
+
+/* BUTTONS */
+.btn{
+  width:100%;border:none;border-radius:14px;padding:14px;
+  font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;
+  letter-spacing:.02em;text-transform:uppercase;transition:all .15s;
+}
+.btn.primary{background:var(--red);color:#fff;}
+.btn.primary:active{background:var(--red-strong);}
+.btn.secondary{
+  background:transparent;color:var(--ink);
+  border:1px solid var(--line2);
+}
+.btn.secondary:active{background:var(--card2);}
+.btn.danger{
+  background:transparent;color:var(--red);
+  border:1px solid var(--red);
+}
+
+/* TX LIST */
+.tx-list{margin-top:6px;}
+.tx-list h3{
+  font-size:11px;color:var(--muted);margin:0 0 8px;
+  text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+}
+.tx-row{
+  display:flex;align-items:stretch;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--line);
+}
+.tx-row:last-child{border-bottom:none;}
+.tx-row .bar{width:3px;border-radius:2px;flex-shrink:0;}
+.tx-row .info{flex:1;min-width:0;}
+.tx-row .info .t{font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);}
+.tx-row .info .d{font-size:11px;color:var(--muted);margin-top:2px;}
+.tx-row .amt{font-size:13.5px;font-weight:700;align-self:center;}
+.tx-row .amt.in{color:#fff;}
+.tx-row .amt.out{color:var(--red);}
+.tx-row .del{
+  background:none;border:none;color:rgba(255,255,255,0.25);
+  font-size:18px;padding:2px 6px;cursor:pointer;align-self:center;
+  transition:color .15s;
+}
+.tx-row .del:hover{color:var(--red);}
+.empty-state{color:var(--muted);font-size:13px;text-align:center;padding:28px 10px;}
+
+/* SPLIT ROWS */
+.split-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.split-row .sq{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.split-row .lbl{flex:1;font-size:13px;color:rgba(255,255,255,0.85);}
+.split-row input{
+  width:64px;text-align:right;background:var(--card2);border:1px solid var(--line2);
+  border-radius:10px;padding:8px 10px;color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:13.5px;
+}
+.split-row input:focus{outline:none;border-color:var(--red);}
+.split-sum{
+  font-size:12px;color:var(--muted);
+  margin:6px 0 14px;text-align:right;font-weight:600;
+}
+.split-sum.ok{color:#4ade80;font-weight:800;}
+.split-sum.bad{color:var(--red);font-weight:800;}
+.help{
+  font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;left:50%;bottom:100px;transform:translateX(-50%);
+  background:#1a1a1a;color:#fff;border:1px solid #333;
+  padding:10px 18px;border-radius:12px;font-size:13px;font-weight:600;
+  z-index:200;animation:fadeOut 2s forwards;
+  white-space:nowrap;
+}
+@keyframes fadeOut{0%,70%{opacity:1;}100%{opacity:0;}}
+
+/* BOTTOM NAV */
+nav.bottom{
+  position:fixed;left:0;right:0;bottom:0;
+  max-width:480px;margin:0 auto;
+  background:rgba(8,8,8,0.97);border-top:1px solid var(--line);
+  display:flex;padding:8px 10px calc(10px + env(safe-area-inset-bottom));
+  backdrop-filter:blur(12px);z-index:100;
+}
+nav.bottom button{
+  flex:1;background:none;border:none;color:#555;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;
+  gap:5px;padding:6px 0;font-size:10px;font-weight:700;
+  cursor:pointer;letter-spacing:.03em;text-transform:uppercase;
+  transition:color .15s;
+}
+nav.bottom button.active{color:var(--red);}
+nav.bottom svg{stroke:currentColor;}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Загрузка…</div></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BUCKET_META = {
+    free:    { label:'Свободные',        color:'#4a4f58' },
+    project: { label:'Реклама / проект', color:'#cc2233' },
+    goal:    { label:'Цель: брекеты',    color:'#ff1e1e' },
+    crypto:  { label:'Крипта',           color:'#888e9a' }
+  };
+  var BUCKET_ORDER = ['free','project','goal','crypto'];
+
+  var INCOME_CATS = [
+    {id:'side',     label:'Подработка'},
+    {id:'services', label:'Услуги'},
+    {id:'gift',     label:'Подарок'},
+    {id:'other_in', label:'Другое'}
+  ];
+  var EXPENSE_CATS = [
+    {id:'pcclub',    label:'ПК клубы'},
+    {id:'energy',    label:'Энергетики'},
+    {id:'clothes',   label:'Шмотки'},
+    {id:'project',   label:'На проект (хостинг/реклама)'},
+    {id:'other_out', label:'Другое'}
+  ];
+
+  var ICONS = {
+    home: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="1.8"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>',
+    ops:  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="1.8"><line x1="5" y1="7" x2="19" y2="7"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="17" x2="13" y2="17"/></svg>',
+    set:  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 4v2.4M12 17.6V20M4 12h2.4M17.6 12H20M6.5 6.5l1.6 1.6M15.9 15.9l1.6 1.6M6.5 17.5l1.6-1.6M15.9 8.1l1.6-1.6"/></svg>'
+  };
+
+  var DEFAULT_STATE = { settings:{goal:400000, splits:{free:30,project:20,goal:40,crypto:10}}, buckets:{free:0,project:0,goal:0,crypto:0} };
+  var state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  var transactions = [];
+  var loaded = false;
+  var currentTab = 'home';
+  var txType = 'income';
+  var selectedCat = INCOME_CATS[0].id;
+  var STORAGE_KEY_STATE = 'wise-tracker-state';
+  var STORAGE_KEY_TX = 'wise-tracker-transactions';
+
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmt(n){ n = Math.round(n||0); return n.toLocaleString('ru-RU') + ' ₽'; }
+  function fmtDate(iso){ var d=new Date(iso); return d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}); }
+  function catLabel(list, id){
+    for (var i=0;i<list.length;i++){ if(list[i].id===id) return list[i]; }
+    return {label:id};
+  }
+  function flash(msg){
+    var t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+    document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2000);
+  }
+
+  /* ---------- persistence ---------- */
+  function persist(){
+    try{ localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({settings:state.settings, buckets:state.buckets})); }
+    catch(e){ console.error('save state failed', e); flash('Не удалось сохранить данные'); }
+    try{ localStorage.setItem(STORAGE_KEY_TX, JSON.stringify(transactions)); }
+    catch(e){ console.error('save tx failed', e); }
+  }
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY_STATE);
+      if (raw){ var parsed = JSON.parse(raw); if(parsed.settings) state.settings=parsed.settings; if(parsed.buckets) state.buckets=parsed.buckets; }
+    }catch(e){}
+    try{
+      var rawTx = localStorage.getItem(STORAGE_KEY_TX);
+      if (rawTx){ transactions = JSON.parse(rawTx); }
+    }catch(e){ transactions = []; }
+  }
+
+  /* ---------- money logic ---------- */
+  function addIncome(catId, amountStr, note){
+    var amount = Math.round(parseFloat(amountStr));
+    if (!amount || amount<=0){ flash('Введи сумму дохода'); return; }
+    var s = state.settings.splits;
+    var split = {}; var used = 0;
+    ['project','goal','crypto'].forEach(function(k){ var part=Math.round(amount*(s[k]/100)); split[k]=part; used+=part; });
+    split.free = amount - used;
+    BUCKET_ORDER.forEach(function(k){ state.buckets[k] += split[k]; });
+    transactions.unshift({id:uid(), type:'income', category:catId, amount:amount, date:new Date().toISOString(), split:split, note:note||''});
+    persist(); render(); flash('Доход распределён по счетам');
+  }
+  function addExpense(catId, amountStr, note){
+    var amount = Math.round(parseFloat(amountStr));
+    if (!amount || amount<=0){ flash('Введи сумму расхода'); return; }
+    var bucket = (catId==='project') ? 'project' : 'free';
+    state.buckets[bucket] -= amount;
+    transactions.unshift({id:uid(), type:'expense', category:catId, amount:amount, bucket:bucket, date:new Date().toISOString(), note:note||''});
+    persist(); render();
+  }
+  function transferFunds(from, to, amountStr){
+    var amount = Math.round(parseFloat(amountStr));
+    if (!amount || amount<=0){ flash('Введи сумму перевода'); return; }
+    if (from===to){ flash('Выбери разные счета'); return; }
+    state.buckets[from] -= amount; state.buckets[to] += amount;
+    transactions.unshift({id:uid(), type:'transfer', from:from, to:to, amount:amount, date:new Date().toISOString()});
+    persist(); render(); flash('Перевод выполнен');
+  }
+  function deleteTransaction(id){
+    var idx=-1; for(var i=0;i<transactions.length;i++){ if(transactions[i].id===id){ idx=i; break; } }
+    if (idx===-1) return;
+    var tx = transactions[idx];
+    if (tx.type==='income'){ BUCKET_ORDER.forEach(function(k){ state.buckets[k] -= (tx.split[k]||0); }); }
+    else if (tx.type==='expense'){ state.buckets[tx.bucket] += tx.amount; }
+    else if (tx.type==='transfer'){ state.buckets[tx.from] += tx.amount; state.buckets[tx.to] -= tx.amount; }
+    transactions.splice(idx,1);
+    persist(); render();
+  }
+  function computeProjection(){
+    var incomeTxs = transactions.filter(function(t){ return t.type==='income'; });
+    if (incomeTxs.length===0) return 'Добавь первый доход — и здесь появится срок достижения цели.';
+    var dates = incomeTxs.map(function(t){ return new Date(t.date).getTime(); });
+    var first = Math.min.apply(null, dates);
+    var daysElapsed = Math.max(1, (Date.now()-first)/86400000);
+    var dailyRate = state.buckets.goal / daysElapsed;
+    var remaining = Math.max(0, state.settings.goal - state.buckets.goal);
+    if (remaining<=0) return 'Цель достигнута. Счёт «Цель: брекеты» закрыт полностью.';
+    if (dailyRate<=0) return 'Счёт цели пока не растёт — добавь доход, чтобы увидеть срок.';
+    var daysLeft = remaining/dailyRate;
+    var monthsLeft = daysLeft/30.44;
+    if (daysLeft < 45) return 'При текущем темпе цель будет достигнута через <b>'+Math.ceil(daysLeft)+' дней</b>.';
+    return 'При текущем темпе цель будет достигнута через <b>~'+monthsLeft.toFixed(1)+' мес.</b> ('+Math.ceil(daysLeft)+' дней).';
+  }
+
+  /* ---------- rendering ---------- */
+  function renderNav(){
+    var tabs = [ {id:'home',label:'Главная'}, {id:'ops',label:'Операции'}, {id:'set',label:'Настройки'} ];
+    return '<nav class="bottom">' + tabs.map(function(t){
+      return '<button data-action="tab" data-tab="'+t.id+'" class="'+(currentTab===t.id?'active':'')+'">'+ICONS[t.id]+'<span>'+t.label+'</span></button>';
+    }).join('') + '</nav>';
+  }
+
+  function ringSvg(pct){
+    var r = 60, size=140, sw=10;
+    var circ = 2*Math.PI*r;
+    var offset = circ - (circ * Math.min(100,Math.max(0,pct)) / 100);
+    return '<svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">' +
+      '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="#1a1a1a" stroke-width="'+sw+'"/>' +
+      '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="#ff1e1e" stroke-width="'+sw+'" stroke-linecap="round" ' +
+      'stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>' +
+    '</svg>';
+  }
+
+  function renderAllocBar(){
+    var s = state.settings.splits;
+    return '<div class="alloc-bar">' + BUCKET_ORDER.map(function(k){
+      return '<div style="width:'+s[k]+'%;background:'+BUCKET_META[k].color+'"></div>';
+    }).join('') + '</div>';
+  }
+
+  function renderHome(){
+    var pct = state.settings.goal>0 ? Math.min(100,(state.buckets.goal/state.settings.goal)*100) : 0;
+    var remaining = Math.max(0, state.settings.goal - state.buckets.goal);
+    var monthKey = new Date().toISOString().slice(0,7);
+    var monthIn=0, monthOut=0;
+    transactions.forEach(function(t){
+      if (t.date.slice(0,7)!==monthKey) return;
+      if (t.type==='income') monthIn+=t.amount;
+      if (t.type==='expense') monthOut+=t.amount;
+    });
+
+    var bucketRows = BUCKET_ORDER.map(function(k){
+      var v = state.buckets[k];
+      return '<div class="ledger-row"><span class="sq" style="background:'+BUCKET_META[k].color+'"></span>' +
+        '<span class="lbl">'+BUCKET_META[k].label+'</span>' +
+        '<span class="val mono '+(v<0?'neg':'')+'">'+fmt(v)+'</span></div>';
+    }).join('');
+
+    var s = state.settings.splits;
+    var legendRows = BUCKET_ORDER.map(function(k){
+      return '<div class="ledger-row"><span class="sq" style="background:'+BUCKET_META[k].color+'"></span>' +
+        '<span class="lbl">'+BUCKET_META[k].label+'</span><span class="pct">'+s[k]+'%</span></div>';
+    }).join('');
+
+    return '' +
+    '<div class="card glow">' +
+      '<div class="goal-title">Цель — лечение зубов до брекетов</div>' +
+      '<div class="ring-wrap">'+ringSvg(pct)+'<div class="ring-center"><div class="ring-pct mono">'+pct.toFixed(0)+'%</div><div class="ring-label">накоплено</div></div></div>' +
+      '<div class="goal-amounts"><div class="saved mono">'+fmt(state.buckets.goal)+'</div><div class="of">из '+fmt(state.settings.goal)+' · осталось '+fmt(remaining)+'</div></div>' +
+      '<div class="divider"></div>' +
+      '<div class="projection">'+computeProjection()+'</div>' +
+    '</div>' +
+
+    '<div class="card"><h3>Счета</h3>'+bucketRows+'</div>' +
+
+    '<div class="summary-row">' +
+      '<div class="item"><div class="l">Доход за месяц</div><div class="v mono" style="color:#4ade80">+'+fmt(monthIn)+'</div></div>' +
+      '<div class="item"><div class="l">Расход за месяц</div><div class="v mono" style="color:var(--red)">−'+fmt(monthOut)+'</div></div>' +
+    '</div>' +
+
+    '<div class="card"><h3>Распределение каждого дохода</h3>' + renderAllocBar() + legendRows +
+      '<div class="help">Расходы «На проект» списываются со счёта «Реклама/проект». Остальные расходы — со «Свободных».</div>' +
+    '</div>';
+  }
+
+  function renderOps(){
+    var cats = txType==='income' ? INCOME_CATS : EXPENSE_CATS;
+    if (!cats.some(function(c){return c.id===selectedCat;})) selectedCat = cats[0].id;
+    var chips = cats.map(function(c){
+      return '<button class="chip '+(selectedCat===c.id?'active':'')+'" data-action="pick-cat" data-cat="'+c.id+'">'+c.label+'</button>';
+    }).join('');
+
+    var txRows = transactions.slice(0,40).map(function(t){
+      var title, amtClass, amtSign, barColor;
+      if (t.type==='income'){
+        var c = catLabel(INCOME_CATS, t.category); title=c.label; amtClass='in'; amtSign='+'; barColor=BUCKET_META.goal.color;
+      } else if (t.type==='expense'){
+        var c2 = catLabel(EXPENSE_CATS, t.category); title=c2.label; amtClass='out'; amtSign='−';
+        barColor = (t.category==='project') ? BUCKET_META.project.color : BUCKET_META.free.color;
+      } else {
+        title = 'Перевод: '+BUCKET_META[t.from].label+' → '+BUCKET_META[t.to].label; amtClass='out'; amtSign=''; barColor=BUCKET_META.crypto.color;
+      }
+      return '<div class="tx-row"><div class="bar" style="background:'+barColor+'"></div>' +
+        '<div class="info"><div class="t">'+escapeHtml(title)+'</div><div class="d">'+fmtDate(t.date)+'</div></div>' +
+        '<div class="amt mono '+amtClass+'">'+amtSign+fmt(t.amount)+'</div>' +
+        '<button class="del" data-action="delete-tx" data-id="'+t.id+'">×</button></div>';
+    }).join('');
+
+    return '' +
+    '<div class="card">' +
+      '<div class="segmented">' +
+        '<button class="'+(txType==='income'?'active':'')+'" data-action="set-type" data-type="income">Доход</button>' +
+        '<button class="'+(txType==='expense'?'active':'')+'" data-action="set-type" data-type="expense">Расход</button>' +
+      '</div>' +
+      '<div class="chip-grid">'+chips+'</div>' +
+      '<div class="field"><label>Сумма, ₽</label><input class="mono" id="amount-input" type="number" inputmode="decimal" min="0" placeholder="0" autocomplete="off"></div>' +
+      '<div class="field"><label>Заметка (необязательно)</label><input id="note-input" type="text" placeholder="Например: фриланс-заказ" autocomplete="off"></div>' +
+      '<button class="btn primary" data-action="submit-tx">'+(txType==='income'?'Добавить доход':'Добавить расход')+'</button>' +
+    '</div>' +
+
+    '<div class="card"><h3>Перевод между счетами</h3>' +
+      '<div class="field"><label>Откуда</label><select id="transfer-from">'+BUCKET_ORDER.map(function(k){return '<option value="'+k+'">'+BUCKET_META[k].label+'</option>';}).join('')+'</select></div>' +
+      '<div class="field"><label>Куда</label><select id="transfer-to">'+BUCKET_ORDER.map(function(k){return '<option value="'+k+'"'+(k==='goal'?' selected':'')+'>'+BUCKET_META[k].label+'</option>';}).join('')+'</select></div>' +
+      '<div class="field"><label>Сумма, ₽</label><input class="mono" id="transfer-amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>' +
+      '<button class="btn secondary" data-action="submit-transfer">Перевести</button>' +
+    '</div>' +
+
+    '<div class="tx-list"><h3>История операций</h3>' +
+      (txRows || '<div class="empty-state">Пока пусто. Добавь первую операцию выше.</div>') +
+    '</div>';
+  }
+
+  function renderSettings(){
+    var sum=0; BUCKET_ORDER.forEach(function(k){ sum += Number(state.settings.splits[k])||0; });
+    var sumClass = sum===100 ? 'ok' : 'bad';
+    var splitRows = BUCKET_ORDER.map(function(k){
+      return '<div class="split-row"><span class="sq" style="background:'+BUCKET_META[k].color+'"></span>' +
+        '<span class="lbl">'+BUCKET_META[k].label+'</span>' +
+        '<input type="number" min="0" max="100" data-bucket="'+k+'" class="split-input mono" value="'+state.settings.splits[k]+'">%</div>';
+    }).join('');
+
+    return '' +
+    '<div class="card"><h3>Цель</h3>' +
+      '<div class="field"><label>Сумма цели, ₽</label><input class="mono" id="goal-input" type="number" min="0" value="'+state.settings.goal+'"></div>' +
+      '<button class="btn secondary" data-action="save-goal">Сохранить цель</button>' +
+    '</div>' +
+
+    '<div class="card"><h3>Распределение каждого дохода</h3>' +
+      splitRows +
+      '<div class="split-sum '+sumClass+'">Сумма: '+sum+'% '+(sum===100?'✓ верно':'(должно быть 100%)')+'</div>' +
+      '<button class="btn primary" data-action="save-splits">Сохранить распределение</button>' +
+      '<div class="help">Расходы «На проект» списываются со счёта «Реклама/проект». Остальные расходы — со «Свободных».</div>' +
+    '</div>' +
+
+    '<div class="card"><h3>Данные</h3>' +
+      '<div class="help" style="margin-top:0;margin-bottom:14px;">Все данные хранятся локально, на этом устройстве, в этом браузере.</div>' +
+      '<button class="btn danger" data-action="reset-all">Сбросить всё</button>' +
+    '</div>';
+  }
+
+  function render(){
+    var app = document.getElementById('app');
+    if (!loaded){ app.innerHTML = '<div class="loading">Загрузка…</div>'; return; }
+    var body = currentTab==='home' ? renderHome() : (currentTab==='ops' ? renderOps() : renderSettings());
+    app.innerHTML =
+      '<div class="ribbon"></div>' +
+      '<div class="topbar"><div class="brand">Wise<span class="accent">Tracker</span></div><div class="brand-sub">Личный финансовый журнал</div></div>' +
+      '<div class="scroll">' + body + '</div>' +
+      renderNav();
+  }
+
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+
+    if (action==='tab'){ e.preventDefault(); currentTab = el.getAttribute('data-tab'); render(); }
+    else if (action==='set-type'){ txType = el.getAttribute('data-type'); selectedCat=(txType==='income'?INCOME_CATS:EXPENSE_CATS)[0].id; render(); }
+    else if (action==='pick-cat'){ selectedCat = el.getAttribute('data-cat'); render(); }
+    else if (action==='submit-tx'){
+      var amount = document.getElementById('amount-input').value;
+      var note = document.getElementById('note-input').value;
+      if (txType==='income') addIncome(selectedCat, amount, note); else addExpense(selectedCat, amount, note);
+    }
+    else if (action==='submit-transfer'){
+      var from = document.getElementById('transfer-from').value;
+      var to = document.getElementById('transfer-to').value;
+      var amt = document.getElementById('transfer-amount').value;
+      transferFunds(from, to, amt);
+    }
+    else if (action==='delete-tx'){
+      if (confirm('Удалить эту операцию? Баланс счетов пересчитается.')) deleteTransaction(el.getAttribute('data-id'));
+    }
+    else if (action==='save-goal'){
+      var g = Math.round(parseFloat(document.getElementById('goal-input').value));
+      if (g>0){ state.settings.goal=g; persist(); render(); flash('Цель обновлена'); }
+    }
+    else if (action==='save-splits'){
+      var inputs = document.querySelectorAll('.split-input');
+      var newSplits={}; var s=0;
+      inputs.forEach(function(inp){ var v=Math.round(parseFloat(inp.value)||0); newSplits[inp.getAttribute('data-bucket')]=v; s+=v; });
+      if (s!==100){ flash('Сумма процентов должна быть 100%'); return; }
+      state.settings.splits = newSplits; persist(); render(); flash('Распределение сохранено');
+    }
+    else if (action==='reset-all'){
+      if (confirm('Точно стереть все данные на этом устройстве и начать заново?')){
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        transactions = [];
+        persist(); render();
+      }
+    }
+  });
+
+  function init(){ loadState(); loaded = true; render(); }
+  init();
+})();
+</script>
+</body>
+</html>
